@@ -70,7 +70,7 @@ namespace hsync.Setting
                 Model = new SettingModel
                 {
                     Language = GetLanguageKey(),
-                    ThreadCount = Environment.ProcessorCount * 12,
+                    ThreadCount = Environment.ProcessorCount * 24,
                     PostprocessorThreadCount = 3,
                     SuperPath = AppProvider.DefaultSuperPath,
 
