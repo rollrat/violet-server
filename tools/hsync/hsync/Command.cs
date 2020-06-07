@@ -175,7 +175,7 @@ namespace hsync
 
             // Sync Hitomi
             {
-                var range = 200;
+                var range = 2000;
                 var exists = new HashSet<int>();
                 foreach (var metadata in HitomiData.Instance.metadata_collection)
                     exists.Add(metadata.ID);
