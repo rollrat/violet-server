@@ -50,16 +50,6 @@ namespace hsync.Setting
         /// Parent Path for Downloading
         /// </summary>
         public string SuperPath;
-
-        /// <summary>
-        /// Script Path
-        /// </summary>
-        public string ScriptPath;
-
-        /// <summary>
-        /// WebSocket Server Address
-        /// </summary>
-        public string ConnectionAddress;
     }
 
     public class Settings : ILazy<Settings>
@@ -80,11 +70,9 @@ namespace hsync.Setting
                 Model = new SettingModel
                 {
                     Language = GetLanguageKey(),
-                    ThreadCount = Environment.ProcessorCount,
+                    ThreadCount = Environment.ProcessorCount * 12,
                     PostprocessorThreadCount = 3,
                     SuperPath = AppProvider.DefaultSuperPath,
-                    ConnectionAddress = "ws://127.0.0.1:45852/",
-                    ScriptPath = Path.Combine(AppProvider.DefaultSuperPath, "script"),
 
                     HitomiSettings = new SettingModel.HitomiSetting
                     {
@@ -138,8 +126,6 @@ namespace hsync.Setting
                 Model.ThreadCount = 3;
             if (string.IsNullOrWhiteSpace(Model.SuperPath))
                 Model.SuperPath = AppProvider.DefaultSuperPath;
-            if (string.IsNullOrWhiteSpace(Model.ConnectionAddress))
-                Model.ConnectionAddress = "ws://127.0.0.1:45852/";
 
             if (Model.NetworkSettings == null)
             {
