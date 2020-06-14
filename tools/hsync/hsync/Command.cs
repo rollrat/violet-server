@@ -173,6 +173,7 @@ namespace hsync
 
             var latest = HitomiData.Instance.metadata_collection.First().ID;
 
+//#if true
             // Sync Hitomi
             {
                 var range = 2000;
@@ -265,8 +266,15 @@ namespace hsync
                 Console.Write("Save to hiddendata.json... ");
                 HitomiData.Instance.SaveWithNewData(result);
                 Console.WriteLine("Complete");
+
+//#if true
+//                Console.Write("Save to index-metadata.json... ");
+//                HitomiIndex.MakeIndex();
+//                Console.WriteLine("Complete");
+//#endif
             }
 
+//#if false
             // Sync EH
             {
                 var result = new List<EHentaiResultArticle>();
@@ -292,7 +300,7 @@ namespace hsync
                             result.AddRange(exh);
                             if (exh.Count != 25)
                                 Logs.Instance.PushWarning("[Miss] " + url);
-                            if (i > 50 && exh.Min(x => x.URL.Split('/')[4].ToInt()) < latest)
+                            if (i > 500 && exh.Min(x => x.URL.Split('/')[4].ToInt()) < latest)
                                 break;
                             Logs.Instance.Push("Parse exh page - " + i);
                         }
@@ -336,7 +344,10 @@ namespace hsync
                     serializer.Serialize(writer, xxx);
                 }
             }
+//#endif
+//#endif
 
+//#if false
             // Make DataBase
             {
                 HitomiData.Instance.metadata_collection.Clear();
@@ -352,44 +363,212 @@ namespace hsync
                         dict.Add(xxx[i].URL.Split('/')[4], i);
                 }
 
-                var db = new SQLiteConnection("hitomidata.db");
-                var info = db.GetTableInfo(typeof(HitomiColumnModel).Name);
-                if (!info.Any())
-                    db.CreateTable<HitomiColumnModel>();
-                db.InsertAll(HitomiData.Instance.metadata_collection.Select(md =>
                 {
-                    var dd = new HitomiColumnModel
+                    var db = new SQLiteConnection("hitomidata.db");
+                    var info = db.GetTableInfo(typeof(HitomiColumnModel).Name);
+                    if (!info.Any())
+                        db.CreateTable<HitomiColumnModel>();
+                    db.InsertAll(HitomiData.Instance.metadata_collection.Select(md =>
                     {
-                        Id = md.ID,
-                        Artists = (md.Artists != null && md.Artists.Length > 0 && md.Artists[0] != "" ? string.Join("|", md.Artists) + "|" : "N/A|"),
-                        Characters = (md.Characters != null && md.Characters.Length > 0 && md.Characters[0] != "" ? string.Join("|", md.Characters) + "|" : null),
-                        Groups = (md.Groups != null && md.Groups.Length > 0 && md.Groups[0] != "" ? string.Join("|", md.Groups) + "|" : null),
-                        Series = (md.Parodies != null && md.Parodies.Length > 0 && md.Parodies[0] != "" ? string.Join("|", md.Parodies) + "|" : null),
-                        Title = md.Name,
-                        Tags = (md.Tags != null && md.Tags.Length > 0 && md.Tags[0] != "" ? string.Join("|", md.Tags) + "|" : null),
-                        Type = md.Type,
-                        Language = md.Language,
-
-                    };
-
-                    if (dict.ContainsKey(md.ID.ToString()))
-                    {
-                        var ii = xxx[dict[md.ID.ToString()]];
-                        dd.Uploader = ii.Uploader;
-                        dd.Published = DateTime.Parse(ii.Published);
-                        dd.EHash = ii.URL.Split('/')[5];
-                        dd.Files = ii.Files.Split(' ')[0].ToInt();
-                        if (ii.Title.StartsWith("("))
+                        var dd = new HitomiColumnModel
                         {
-                            dd.Class = ii.Title.Split("(")[1].Split(")")[0];
-                        }
-                    }
+                            Id = md.ID,
+                            Artists = (md.Artists != null && md.Artists.Length > 0 && md.Artists[0] != "" ? "|" + string.Join("|", md.Artists) + "|" : "N/A|"),
+                            Characters = (md.Characters != null && md.Characters.Length > 0 && md.Characters[0] != "" ? "|" + string.Join("|", md.Characters) + "|" : null),
+                            Groups = (md.Groups != null && md.Groups.Length > 0 && md.Groups[0] != "" ? "|" + string.Join("|", md.Groups) + "|" : null),
+                            Series = (md.Parodies != null && md.Parodies.Length > 0 && md.Parodies[0] != "" ? "|" + string.Join("|", md.Parodies) + "|" : null),
+                            Title = md.Name,
+                            Tags = (md.Tags != null && md.Tags.Length > 0 && md.Tags[0] != "" ? "|" + string.Join("|", md.Tags) + "|" : null),
+                            Type = md.Type,
+                            Language = md.Language,
 
-                    return dd;
-                }));
-                db.Close();
-                Console.WriteLine("Complete");
+                        };
+
+                        if (dict.ContainsKey(md.ID.ToString()))
+                        {
+                            var ii = xxx[dict[md.ID.ToString()]];
+                            dd.Uploader = ii.Uploader;
+                            dd.Published = DateTime.Parse(ii.Published);
+                            dd.EHash = ii.URL.Split('/')[5];
+                            dd.Files = ii.Files.Split(' ')[0].ToInt();
+                            if (ii.Title.StartsWith("("))
+                            {
+                                dd.Class = ii.Title.Split("(")[1].Split(")")[0];
+                            }
+                        }
+
+                        return dd;
+                    }));
+                    db.Close();
+                }
+
+                Console.WriteLine("Complete-All");
+
+                {
+                    var db = new SQLiteConnection("hitomidata-korean.db");
+                    var info = db.GetTableInfo(typeof(HitomiColumnModel).Name);
+                    if (!info.Any())
+                        db.CreateTable<HitomiColumnModel>();
+                    db.InsertAll(HitomiData.Instance.metadata_collection.Where(md => md.Language == null || md.Language == "" || md.Language == "korean").Select(md =>
+                    {
+                        var dd = new HitomiColumnModel
+                        {
+                            Id = md.ID,
+                            Artists = (md.Artists != null && md.Artists.Length > 0 && md.Artists[0] != "" ? "|" + string.Join("|", md.Artists) + "|" : "N/A|"),
+                            Characters = (md.Characters != null && md.Characters.Length > 0 && md.Characters[0] != "" ? "|" + string.Join("|", md.Characters) + "|" : null),
+                            Groups = (md.Groups != null && md.Groups.Length > 0 && md.Groups[0] != "" ? "|" + string.Join("|", md.Groups) + "|" : null),
+                            Series = (md.Parodies != null && md.Parodies.Length > 0 && md.Parodies[0] != "" ? "|" + string.Join("|", md.Parodies) + "|" : null),
+                            Title = md.Name,
+                            Tags = (md.Tags != null && md.Tags.Length > 0 && md.Tags[0] != "" ? "|" + string.Join("|", md.Tags) + "|" : null),
+                            Type = md.Type,
+                            Language = md.Language,
+
+                        };
+
+                        if (dict.ContainsKey(md.ID.ToString()))
+                        {
+                            var ii = xxx[dict[md.ID.ToString()]];
+                            dd.Uploader = ii.Uploader;
+                            dd.Published = DateTime.Parse(ii.Published);
+                            dd.EHash = ii.URL.Split('/')[5];
+                            dd.Files = ii.Files.Split(' ')[0].ToInt();
+                            if (ii.Title.StartsWith("("))
+                            {
+                                dd.Class = ii.Title.Split("(")[1].Split(")")[0];
+                            }
+                        }
+
+                        return dd;
+                    }));
+                    db.Close();
+                }
+
+                Console.WriteLine("Complete-Korean");
+
+                {
+                    var db = new SQLiteConnection("hitomidata-japanese.db");
+                    var info = db.GetTableInfo(typeof(HitomiColumnModel).Name);
+                    if (!info.Any())
+                        db.CreateTable<HitomiColumnModel>();
+                    db.InsertAll(HitomiData.Instance.metadata_collection.Where(md => md.Language == null || md.Language == "" || md.Language == "japanese").Select(md =>
+                    {
+                        var dd = new HitomiColumnModel
+                        {
+                            Id = md.ID,
+                            Artists = (md.Artists != null && md.Artists.Length > 0 && md.Artists[0] != "" ? "|" + string.Join("|", md.Artists) + "|" : "N/A|"),
+                            Characters = (md.Characters != null && md.Characters.Length > 0 && md.Characters[0] != "" ? "|" + string.Join("|", md.Characters) + "|" : null),
+                            Groups = (md.Groups != null && md.Groups.Length > 0 && md.Groups[0] != "" ? "|" + string.Join("|", md.Groups) + "|" : null),
+                            Series = (md.Parodies != null && md.Parodies.Length > 0 && md.Parodies[0] != "" ? "|" + string.Join("|", md.Parodies) + "|" : null),
+                            Title = md.Name,
+                            Tags = (md.Tags != null && md.Tags.Length > 0 && md.Tags[0] != "" ? "|" + string.Join("|", md.Tags) + "|" : null),
+                            Type = md.Type,
+                            Language = md.Language,
+
+                        };
+
+                        if (dict.ContainsKey(md.ID.ToString()))
+                        {
+                            var ii = xxx[dict[md.ID.ToString()]];
+                            dd.Uploader = ii.Uploader;
+                            dd.Published = DateTime.Parse(ii.Published);
+                            dd.EHash = ii.URL.Split('/')[5];
+                            dd.Files = ii.Files.Split(' ')[0].ToInt();
+                            if (ii.Title.StartsWith("("))
+                            {
+                                dd.Class = ii.Title.Split("(")[1].Split(")")[0];
+                            }
+                        }
+
+                        return dd;
+                    }));
+                    db.Close();
+                }
+
+                Console.WriteLine("Complete-Japanese");
+
+                {
+                    var db = new SQLiteConnection("hitomidata-english.db");
+                    var info = db.GetTableInfo(typeof(HitomiColumnModel).Name);
+                    if (!info.Any())
+                        db.CreateTable<HitomiColumnModel>();
+                    db.InsertAll(HitomiData.Instance.metadata_collection.Where(md => md.Language == null || md.Language == "" || md.Language == "english").Select(md =>
+                    {
+                        var dd = new HitomiColumnModel
+                        {
+                            Id = md.ID,
+                            Artists = (md.Artists != null && md.Artists.Length > 0 && md.Artists[0] != "" ? "|" + string.Join("|", md.Artists) + "|" : "N/A|"),
+                            Characters = (md.Characters != null && md.Characters.Length > 0 && md.Characters[0] != "" ? "|" + string.Join("|", md.Characters) + "|" : null),
+                            Groups = (md.Groups != null && md.Groups.Length > 0 && md.Groups[0] != "" ? "|" + string.Join("|", md.Groups) + "|" : null),
+                            Series = (md.Parodies != null && md.Parodies.Length > 0 && md.Parodies[0] != "" ? "|" + string.Join("|", md.Parodies) + "|" : null),
+                            Title = md.Name,
+                            Tags = (md.Tags != null && md.Tags.Length > 0 && md.Tags[0] != "" ? "|" + string.Join("|", md.Tags) + "|" : null),
+                            Type = md.Type,
+                            Language = md.Language,
+
+                        };
+
+                        if (dict.ContainsKey(md.ID.ToString()))
+                        {
+                            var ii = xxx[dict[md.ID.ToString()]];
+                            dd.Uploader = ii.Uploader;
+                            dd.Published = DateTime.Parse(ii.Published);
+                            dd.EHash = ii.URL.Split('/')[5];
+                            dd.Files = ii.Files.Split(' ')[0].ToInt();
+                            if (ii.Title.StartsWith("("))
+                            {
+                                dd.Class = ii.Title.Split("(")[1].Split(")")[0];
+                            }
+                        }
+
+                        return dd;
+                    }));
+                    db.Close();
+                }
+
+                Console.WriteLine("Complete-English");
+
+                {
+                    var db = new SQLiteConnection("hitomidata-chinese.db");
+                    var info = db.GetTableInfo(typeof(HitomiColumnModel).Name);
+                    if (!info.Any())
+                        db.CreateTable<HitomiColumnModel>();
+                    db.InsertAll(HitomiData.Instance.metadata_collection.Where(md => md.Language == null || md.Language == "" || md.Language == "chinese").Select(md =>
+                    {
+                        var dd = new HitomiColumnModel
+                        {
+                            Id = md.ID,
+                            Artists = (md.Artists != null && md.Artists.Length > 0 && md.Artists[0] != "" ? "|" + string.Join("|", md.Artists) + "|" : "N/A|"),
+                            Characters = (md.Characters != null && md.Characters.Length > 0 && md.Characters[0] != "" ? "|" + string.Join("|", md.Characters) + "|" : null),
+                            Groups = (md.Groups != null && md.Groups.Length > 0 && md.Groups[0] != "" ? "|" + string.Join("|", md.Groups) + "|" : null),
+                            Series = (md.Parodies != null && md.Parodies.Length > 0 && md.Parodies[0] != "" ? "|" + string.Join("|", md.Parodies) + "|" : null),
+                            Title = md.Name,
+                            Tags = (md.Tags != null && md.Tags.Length > 0 && md.Tags[0] != "" ? "|" + string.Join("|", md.Tags) + "|" : null),
+                            Type = md.Type,
+                            Language = md.Language,
+
+                        };
+
+                        if (dict.ContainsKey(md.ID.ToString()))
+                        {
+                            var ii = xxx[dict[md.ID.ToString()]];
+                            dd.Uploader = ii.Uploader;
+                            dd.Published = DateTime.Parse(ii.Published);
+                            dd.EHash = ii.URL.Split('/')[5];
+                            dd.Files = ii.Files.Split(' ')[0].ToInt();
+                            if (ii.Title.StartsWith("("))
+                            {
+                                dd.Class = ii.Title.Split("(")[1].Split(")")[0];
+                            }
+                        }
+
+                        return dd;
+                    }));
+                    db.Close();
+                }
+
+                Console.WriteLine("Complete-Chinese");
             }
+//#endif
         }
 
         static void download_data(string url, string filename)
